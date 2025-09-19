@@ -1,4 +1,4 @@
-# AGENTS.md — Writing Tools (src/tools)
+# AGENTS.md — Writing Tools (tools)
 
 **Goal:** Teach coding agents to add or modify **tools** that the plugin exports.
 
@@ -18,14 +18,13 @@ A **tool** is a function factory `(ctx) => Tool` that returns:
 > **Adapt imports to your template’s types/exports.** Transaction tools should import `handleTransaction` from `hedera-agent-kit`; it encapsulates [`tx-mode-strategy`](https://github.com/hashgraph/hedera-agent-kit/blob/main/typescript/src/shared/strategies/tx-mode-strategy.ts) so AUTONOMOUS vs RETURN_BYTES stays consistent.
 
 ```ts
-// src/tools/transfer-hbar.ts
+// tools/transfer-hbar.ts
 import { z } from "zod";
 import { Client, AccountId, Hbar, TransferTransaction } from "@hashgraph/sdk";
 import { handleTransaction } from "hedera-agent-kit";
-// Import your local Tool/Context types from this repo:
-import type { Tool, AgentContext } from "../types"; // <— adjust path/names
+import type { Context, Tool } from "hedera-agent-kit";
 
-export const TRANSFER_HBAR = "yourplugin.transfer_hbar";
+export const TRANSFER_HBAR = "yourplugin-transfer_hbar";
 
 const paramsSchema = z.object({
   to: z.string().describe("Recipient Hedera AccountId, e.g. 0.0.1234"),
@@ -37,7 +36,7 @@ const paramsSchema = z.object({
   memo: z.string().max(100).optional().describe("Optional transaction memo"),
 });
 
-export const transferHbarTool = (ctx: AgentContext): Tool => ({
+export const transferHbarTool = (ctx: Context): Tool => ({
   method: TRANSFER_HBAR,
   name: "Transfer HBAR",
   description:
@@ -52,7 +51,7 @@ export const transferHbarTool = (ctx: AgentContext): Tool => ({
 
   execute: async (
     client: Client,
-    context: AgentContext,
+    context: Context,
     params: z.infer<typeof paramsSchema>
   ) => {
     const from = params.from ?? context.accountId;
@@ -80,13 +79,45 @@ export const transferHbarTool = (ctx: AgentContext): Tool => ({
 
 `handleTransaction` performs the mode-specific branching, freezes when necessary, and returns either the raw bytes or the execution result. The optional `postProcess` callback lets you craft a human-readable message once Hedera responds. See [`core-evm-plugin/tools/erc20/create-erc20.ts`](https://github.com/hashgraph/hedera-agent-kit/blob/main/typescript/src/plugins/core-evm-plugin/tools/erc20/create-erc20.ts) for a production example that follows this pattern.
 
+---
+
+## Prompt-driven descriptions
+
+Hedera Agent Kit ships a `PromptGenerator` utility that assembles human-readable instructions from the current `Context`. It exposes helpers such as:
+
+- `PromptGenerator.getContextSnippet(context)` — embeds network, account, or mode details provided by the host application.
+- `PromptGenerator.getParameterUsageInstructions()` — standard guidance that reminds agents to supply every required parameter in a single tool call.
+
+Use these building blocks to keep tool descriptions consistent with the rest of the kit. For example, `create-erc721.ts` composes its description like this:
+
+```ts
+import { PromptGenerator, type Context } from "hedera-agent-kit";
+
+const createERC721Prompt = (context: Context = {}) => {
+  const contextSnippet = PromptGenerator.getContextSnippet(context);
+  const usageInstructions = PromptGenerator.getParameterUsageInstructions();
+
+  return (
+    `\n${contextSnippet}\n\n` +
+    `This tool creates an ERC721 token on Hedera by calling the BaseERC721Factory contract.\n\n` +
+    `Parameters:\n` +
+    `- tokenName (str, required)\n` +
+    `- tokenSymbol (str, required)\n` +
+    `- baseURI (str, optional; defaults to empty string)\n` +
+    `${usageInstructions}\n`
+  );
+};
+```
+
+Because `PromptGenerator` lives in the public package surface, end users can import it directly from `'hedera-agent-kit'` alongside `Context`, `Tool`, `handleTransaction`, and other helpers.
+
 ## Read-only tool skeleton (queries; no modes needed)
 
 ```ts
-// src/tools/get-account-balance.ts
+// tools/get-account-balance.ts
 import { z } from "zod";
 import { Client, AccountId, AccountBalanceQuery } from "@hashgraph/sdk";
-import type { Tool, AgentContext } from "../types";
+import type { Context, Tool } from "hedera-agent-kit";
 
 export const GET_HBAR_BALANCE = "yourplugin.get_hbar_balance";
 
@@ -94,7 +125,7 @@ const paramsSchema = z.object({
   accountId: z.string().describe("AccountId to query, e.g. 0.0.1234"),
 });
 
-export const getHbarBalanceTool = (ctx: AgentContext): Tool => ({
+export const getHbarBalanceTool = (ctx: Context): Tool => ({
   method: GET_HBAR_BALANCE,
   name: "Get HBAR Balance",
   description: "Return the HBAR balance of an account.",
@@ -102,7 +133,7 @@ export const getHbarBalanceTool = (ctx: AgentContext): Tool => ({
 
   execute: async (
     client: Client,
-    _context: AgentContext,
+    _context: Context,
     params: z.infer<typeof paramsSchema>
   ) => {
     const { accountId } = params;
@@ -129,7 +160,7 @@ export const getHbarBalanceTool = (ctx: AgentContext): Tool => ({
 
 After creating a tool file:
 
-1. Export it from src/tools/index.ts.
+1. Export it from tools/index.ts.
 2. Add it to the plugin in src/index.ts inside the tools: (ctx) => [...] array.
 3. Expose a \*ToolNames enum or constants so integrators can reference stable method strings.
 

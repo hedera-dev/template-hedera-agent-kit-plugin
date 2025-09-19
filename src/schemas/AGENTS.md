@@ -1,4 +1,4 @@
-# AGENTS.md — Schemas (src/schemas)
+# AGENTS.md — Schemas (schemas)
 
 **Goal:** Centralize and document input validation for tools using **Zod**.
 
@@ -9,14 +9,14 @@
 - One Zod object per tool input shape (e.g., `<tool>.schema.ts`).
 - **Describe every field** with `.describe()` so agents can auto-document params.
 - Prefer specific refinements over `any`; encode formats (AccountId, TopicId) as strings with `.regex(...)` if helpful.
-- Re-export common atoms (e.g., `accountIdSchema`, `topicIdSchema`, `tokenIdSchema`, `memoSchema`) from `src/schemas/index.ts`.
+- Re-export common atoms (e.g., `accountIdSchema`, `topicIdSchema`, `tokenIdSchema`, `memoSchema`) from `schemas/index.ts`.
 
 ---
 
 ## Example atoms
 
 ```ts
-// src/schemas/atoms.ts
+// schemas/atoms.ts
 import { z } from "zod";
 
 export const accountIdSchema = z
@@ -33,20 +33,22 @@ export const memoSchema = z
 ## Example tool schema
 
 ```ts
-// src/schemas/transfer-hbar.schema.ts
+// schemas/transfer-hbar.schema.ts
 import { z } from "zod";
+import type { Context } from "hedera-agent-kit";
 import { accountIdSchema, memoSchema } from "./atoms";
 
-export const transferHbarParams = z.object({
-  to: accountIdSchema.describe("Recipient AccountId"),
-  amount: z.number().positive().describe("HBAR amount (whole HBAR)"),
-  from: accountIdSchema
-    .optional()
-    .describe("Sender AccountId; defaults to context"),
-  memo: memoSchema.optional(),
-});
+export const transferHbarParams = (_context: Context = {}) =>
+  z.object({
+    to: accountIdSchema.describe("Recipient AccountId"),
+    amount: z.number().positive().describe("HBAR amount (whole HBAR)"),
+    from: accountIdSchema
+      .optional()
+      .describe("Sender AccountId; defaults to context"),
+    memo: memoSchema.optional(),
+  });
 
-export type TransferHbarParams = z.infer<typeof transferHbarParams>;
+export type TransferHbarParams = z.infer<ReturnType<typeof transferHbarParams>>;
 ```
 
 ## Why Zod?
