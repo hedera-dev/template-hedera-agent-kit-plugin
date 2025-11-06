@@ -4,13 +4,6 @@ import { handleTransaction } from "hedera-agent-kit";
 import { AccountId, Client, Status, TransferTransaction } from "@hashgraph/sdk";
 import { simpleTransferHbarParameters } from "@/schemas/simple-transfer-hbar.schema";
 
-// this is a simple implementation
-// we already have a token plugin with a more advanced implementaton
-// check out https://github.com/hashgraph/hedera-agent-kit-js/blob/main/typescript/src/plugins/core-account-plugin/tools/account/transfer-hbar.ts
-// also see the above repo for advanced plugins
-
-// the prompt is what describes the tool to the AI agent
-// use the context argument to create some user specific dynamic data
 const simpleTransferHbarPrompt = (_context: Context = {}) => {
   return `
 This tool will transfer HBAR to an account.
@@ -30,14 +23,13 @@ const transferHbar = async (
     const senderId = (context.accountId ?? client.operatorAccountId) as
       | string
       | AccountId;
-    // set the parameters extracted from user's prompt
     const amount = params.amount;
     const recipientId = params.recipientId;
     const tx = new TransferTransaction()
       .addHbarTransfer(senderId, -amount)
       .addHbarTransfer(recipientId, amount);
 
-    // the handleTransaction helper function executes the transaction or returns transaction bytes depending on the context
+    // handleTransaction submits on AUTONOMOUS mode or returns bytes for RETURN_BYTES mode
     return await handleTransaction(tx, client, context);
   } catch (error) {
     const desc = "Failed to transfer HBAR";

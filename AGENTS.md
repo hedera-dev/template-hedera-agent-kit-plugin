@@ -40,7 +40,5 @@ Set Hedera credentials for local runs/tests:
 
 ```bash
 export HEDERA_ACCOUNT_ID=0.0.xxxx
-export HEDERA_PRIVATE_KEY=302e0201... # DER-encoded; ED25519 or ECDSA
-# optionally:
-export HEDERA_NETWORK=testnet  # testnet|previewnet|mainnet
+export HEDERA_PRIVATE_KEY=0x... # HEX-encoded ECDSA for the example script, but can use either ED25519 or ECDSA
 ```
