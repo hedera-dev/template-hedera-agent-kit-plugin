@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "tsx examples/cli-chat.ts",
+    "run:example": "tsx examples/plugin-tool-calling-agent.ts",
     "build": "tsup",
     "typecheck": "tsc --noEmit"
   },
@@ -12,14 +12,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@hashgraph/sdk": "^2.72.0",
-    "@langchain/core": "^0.3.79",
-    "@langchain/openai": "^0.6.16",
+    "@hashgraph/sdk": "2.68.0",
+    "@langchain/core": "1.1.8",
+    "@langchain/openai": "1.1.1",
     "dotenv": "^17.2.3",
-    "hedera-agent-kit": "^3.2.0",
-    "langchain": "^0.3.36",
+    "hedera-agent-kit": "3.6.0",
+    "langchain": "1.2.3",
     "prompts": "^2.4.2",
-    "zod": "^3.25.76"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@types/prompts": "^2.4.9",
