@@ -21,8 +21,8 @@ This repository bootstraps a Hedera Agent Kit plugin. It demonstrates how to pac
 Set the following environment variables when you run examples or tests:
 
 ```bash
-export HEDERA_ACCOUNT_ID=0.0.xxxx
-export HEDERA_PRIVATE_KEY=0x... # HEX-encoded ECDSA for the example script, but can use either ED25519 or ECDSA
+export ACCOUNT_ID=0.0.xxxx
+export PRIVATE_KEY=0x... # HEX-encoded ECDSA for the example script, but can use either ED25519 or ECDSA
 # For CLI agent example
 export OPENAI_API_KEY=sk-...
 ```
@@ -33,7 +33,7 @@ export OPENAI_API_KEY=sk-...
 npm ci                # install dependencies
 npm run typecheck     # run TypeScript with --noEmit
 npm run build         # build the plugin bundle via tsup
-npm run test          # runs examples/cli-chat.ts (interactive LangChain session)
+npm run run:example   # runs examples/plugin-tool-calling-agent.ts (interactive LangChain session)
 ```
 
 Adjust or extend these scripts in `package.json` as needed.
@@ -51,8 +51,7 @@ src/
     simple-transfer-hbar.ts
   utils/                  # Shared helpers (decimals, mirrornode URLs, etc.)
 examples/
-  agent.ts                # LangChain agent factory using OpenAI
-  cli-chat.ts             # CLI chatbot demonstrating toolkit usage
+  plugin-tool-calling-agent.ts # CLI chatbot demonstrating toolkit usage with LangChain v1
 ```
 
 ## Understanding the Example Tools
@@ -108,14 +107,14 @@ Utilities in `src/utils/` (token decimal conversions, mirror node URLs) are read
 
 ```bash
 npm run build
-OPENAI_API_KEY=... npm run test
+OPENAI_API_KEY=... npm run run:example
 ```
 
-The `examples/cli-chat.ts` script:
+The `examples/plugin-tool-calling-agent.ts` script:
 
 - Instantiates a Hedera `Client` (defaults to testnet; adjust for other networks).
 - Creates a `HederaLangchainToolkit` with your plugin.
-- Spins up a LangChain agent (`examples/agent.ts`) and exposes the plugin tools.
+- Spins up a LangChain agent and exposes the plugin tools.
 - Lets you type natural-language instructions such as “Send 1 HBAR to 0.0.1234”.
 
 Swap in your own tools and the CLI automatically reflects them.
